@@ -84,7 +84,7 @@
         <div id="progress-section">
           <div id="progress-header">
             <span id="progress-label">REWARD PROGRESS: Unlock at 50 Clean Drops!</span>
-            <span id="progress-count"><span id="drops-caught">0</span>/50</span>
+            <span id="progress-count"><span id="drops-caught">0</span>/<span id="drops-target">50</span></span>
           </div>
           <div id="progress-bar-track">
             <div id="progress-bar-fill"></div>
@@ -106,6 +106,15 @@
               and unlock your exclusive <strong>Campus Cafeteria Discount!</strong>
             </p>
             <p id="welcome-subtext">Avoid the brown pollutant drops — they cost you lives.</p>
+            <div id="difficulty-selector">
+              <p class="difficulty-label">SELECT DIFFICULTY</p>
+              <div class="difficulty-btns">
+                <button class="difficulty-btn" data-difficulty="easy" aria-label="Easy difficulty">💧 EASY</button>
+                <button class="difficulty-btn active" data-difficulty="normal" aria-label="Normal difficulty">⚡ NORMAL</button>
+                <button class="difficulty-btn" data-difficulty="hard" aria-label="Hard difficulty">🔥 HARD</button>
+              </div>
+              <p id="difficulty-description" class="difficulty-desc">Catch 50 drops • 3 lives • Standard pace</p>
+            </div>
             <button id="start-btn" class="btn-primary" aria-label="Start the game">
               ▶ START IMPACT
             </button>
@@ -116,6 +125,7 @@
         </div>
 
         <div id="game-board" aria-label="Active game area" tabindex="0">
+          <div id="milestone-toast" class="toast-hidden" aria-live="polite" aria-atomic="true"></div>
           <div id="player-container">
             <div id="player-arrows">
               <span class="player-arrow player-arrow--left">◀</span>
@@ -135,6 +145,8 @@
 
         <footer id="game-footer">
           <a href="https://www.charitywater.org" target="_blank" rel="noopener noreferrer" class="cw-link">charitywater.org</a>
+          <span class="footer-sep">|</span>
+          <a href="https://www.charitywater.org/donate" target="_blank" rel="noopener noreferrer" class="cw-link footer-donate">Donate →</a>
           <span class="footer-sep">|</span>
           <span class="footer-tagline">100% of donations fund clean water projects.</span>
         </footer>

@@ -50,6 +50,78 @@ const CONFIG = {
 };
 
 /* ─────────────────────────────────────────────
+   SECTION A2: DIFFICULTY MODE DEFINITIONS
+───────────────────────────────────────────── */
+const DIFFICULTY_MODES = {
+  easy: {
+    label:               'EASY',
+    WIN_DROPS_TARGET:    30,
+    STARTING_LIVES:      5,
+    DROP_SPEED_BASE:     1.5,
+    DROP_SPEED_MAX:      3.5,
+    SPAWN_INTERVAL_BASE: 1800,
+    SPAWN_INTERVAL_MIN:  700,
+    POLLUTANT_CHANCE:    0.15,
+    POLLUTANT_CHANCE_MAX: 0.30,
+  },
+  normal: {
+    label:               'NORMAL',
+    WIN_DROPS_TARGET:    50,
+    STARTING_LIVES:      3,
+    DROP_SPEED_BASE:     2.0,
+    DROP_SPEED_MAX:      5.5,
+    SPAWN_INTERVAL_BASE: 1400,
+    SPAWN_INTERVAL_MIN:  500,
+    POLLUTANT_CHANCE:    0.28,
+    POLLUTANT_CHANCE_MAX: 0.45,
+  },
+  hard: {
+    label:               'HARD',
+    WIN_DROPS_TARGET:    75,
+    STARTING_LIVES:      2,
+    DROP_SPEED_BASE:     3.0,
+    DROP_SPEED_MAX:      7.0,
+    SPAWN_INTERVAL_BASE: 900,
+    SPAWN_INTERVAL_MIN:  350,
+    POLLUTANT_CHANCE:    0.40,
+    POLLUTANT_CHANCE_MAX: 0.55,
+  },
+};
+
+/* ─────────────────────────────────────────────
+   SECTION A3: AUDIO
+   HTML5 Audio objects — files in /audio/ folder.
+   Errors are silenced so missing files never crash the game.
+───────────────────────────────────────────── */
+const SOUNDS = {
+  clean:     new Audio('audio/catch-clean.mp3'),
+  pollutant: new Audio('audio/catch-pollutant.mp3'),
+  win:       new Audio('audio/win.mp3'),
+  lose:      new Audio('audio/lose.mp3'),
+};
+
+// Set volume and preload
+(function() {
+  Object.values(SOUNDS).forEach(function(s) {
+    s.preload = 'auto';
+    s.volume  = 0.5;
+  });
+})();
+
+/**
+ * Play a named sound. Silently ignores errors (missing files, autoplay block).
+ * @param {'clean'|'pollutant'|'win'|'lose'} name
+ */
+function playSound(name) {
+  try {
+    var s = SOUNDS[name];
+    if (!s) return;
+    s.currentTime = 0;
+    s.play().catch(function() {});
+  } catch(e) {}
+}
+
+/* ─────────────────────────────────────────────
    SECTION B: DOM REFERENCES
    Cache every DOM element used by the engine.
 ───────────────────────────────────────────── */
@@ -112,14 +184,117 @@ const STATE = {
   spawnTimer:       null,
   animFrameId:      null,
   keysHeld:         { left: false, right: false },
-  touchStartX:      0,
-  touchLastX:       0,
-  lastTimestamp:    0,
+  touchStartX:       0,
+  touchLastX:        0,
+  lastTimestamp:     0,
+  difficulty:        'normal',    // currently selected difficulty key
+  milestonesShown:   [],          // drop counts where milestone was already displayed
+  activeMilestones:  [],          // built at game start from current WIN_DROPS_TARGET
 };
 
 /* ─────────────────────────────────────────────
    SECTION D: INITIALIZATION
 ───────────────────────────────────────────── */
+
+/* ─────────────────────────────────────────────
+   SECTION D0: DIFFICULTY & MILESTONE HELPERS
+───────────────────────────────────────────── */
+
+/**
+ * Build an array of milestone objects scaled to the given drop target.
+ * Uses percentage thresholds so milestones fire at appropriate points
+ * for all three difficulty levels.
+ * @param {number} target - WIN_DROPS_TARGET for this difficulty
+ * @returns {Array<{drops: number, message: string}>}
+ */
+function buildMilestones(target) {
+  return [
+    { drops: Math.floor(target * 0.20), message: '💧 Great start! Water is on its way!' },
+    { drops: Math.floor(target * 0.40), message: '🌊 A whole community is celebrating!' },
+    { drops: Math.floor(target * 0.60), message: '💪 More than halfway — keep going!' },
+    { drops: Math.floor(target * 0.80), message: '🔥 Almost there — don\'t stop now!' },
+    { drops: Math.floor(target * 0.90), message: '⚡ So close! One final push!' },
+  ];
+}
+
+/**
+ * Apply a difficulty mode: overwrite CONFIG values, update UI labels,
+ * rebuild milestone array, store selected mode in STATE.
+ * @param {'easy'|'normal'|'hard'} mode
+ */
+function applyDifficulty(mode) {
+  var d = DIFFICULTY_MODES[mode] || DIFFICULTY_MODES.normal;
+  STATE.difficulty = mode;
+
+  // Overwrite CONFIG with difficulty values
+  CONFIG.WIN_DROPS_TARGET    = d.WIN_DROPS_TARGET;
+  CONFIG.STARTING_LIVES      = d.STARTING_LIVES;
+  CONFIG.DROP_SPEED_BASE     = d.DROP_SPEED_BASE;
+  CONFIG.DROP_SPEED_MAX      = d.DROP_SPEED_MAX;
+  CONFIG.SPAWN_INTERVAL_BASE = d.SPAWN_INTERVAL_BASE;
+  CONFIG.SPAWN_INTERVAL_MIN  = d.SPAWN_INTERVAL_MIN;
+  CONFIG.POLLUTANT_CHANCE    = d.POLLUTANT_CHANCE;
+  CONFIG.POLLUTANT_CHANCE_MAX = d.POLLUTANT_CHANCE_MAX;
+
+  // Rebuild milestones for this target
+  STATE.activeMilestones = buildMilestones(d.WIN_DROPS_TARGET);
+
+  // Update progress label
+  var labelEl = document.getElementById('progress-label');
+  if (labelEl) {
+    labelEl.textContent = 'REWARD PROGRESS: Unlock at ' + d.WIN_DROPS_TARGET + ' Clean Drops!';
+  }
+
+  // Update the /N target number in the progress count
+  var targetEl = document.getElementById('drops-target');
+  if (targetEl) targetEl.textContent = d.WIN_DROPS_TARGET;
+
+  // Update difficulty description text
+  var descDescs = {
+    easy:   'Catch 30 drops \u2022 5 lives \u2022 Relaxed pace',
+    normal: 'Catch 50 drops \u2022 3 lives \u2022 Standard pace',
+    hard:   'Catch 75 drops \u2022 2 lives \u2022 Fast & furious',
+  };
+  var descEl = document.getElementById('difficulty-description');
+  if (descEl) descEl.textContent = descDescs[mode] || '';
+}
+
+/**
+ * Check if the current dropsCaught count hits any unshown milestone.
+ * Called after every clean drop catch. Shows toast if milestone hit.
+ */
+function checkMilestones() {
+  for (var i = 0; i < STATE.activeMilestones.length; i++) {
+    var m = STATE.activeMilestones[i];
+    if (STATE.dropsCaught === m.drops && STATE.milestonesShown.indexOf(m.drops) === -1) {
+      STATE.milestonesShown.push(m.drops);
+      showMilestoneToast(m.message);
+      break; // one toast at a time
+    }
+  }
+}
+
+/**
+ * Show a milestone toast notification inside the game board.
+ * Slides in, holds for 2500ms, slides out.
+ * @param {string} message - Text to display in the toast
+ */
+function showMilestoneToast(message) {
+  var toast = document.getElementById('milestone-toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.remove('toast-visible');
+  toast.classList.add('toast-hidden');
+  // Force reflow so the transition re-triggers if called back-to-back
+  void toast.offsetWidth;
+  toast.classList.remove('toast-hidden');
+  toast.classList.add('toast-visible');
+  setTimeout(function() {
+    toast.classList.remove('toast-visible');
+    toast.classList.add('toast-hidden');
+  }, 2500);
+}
+
 function init() {
   renderLives(CONFIG.STARTING_LIVES);
   updateProgressBar(0);
@@ -133,6 +308,20 @@ function init() {
   DOM.startBtn.addEventListener('click', startGame);
   DOM.replayBtn.addEventListener('click', replayGame);
   DOM.copyCodeBtn.addEventListener('click', copyCode);
+
+  // Difficulty button listeners
+  document.querySelectorAll('.difficulty-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.difficulty-btn').forEach(function(b) {
+        b.classList.remove('active');
+      });
+      this.classList.add('active');
+      applyDifficulty(this.getAttribute('data-difficulty'));
+    });
+  });
+
+  // Apply default difficulty (Normal) on load
+  applyDifficulty('normal');
 
   // Keyboard input
   document.addEventListener('keydown', onKeyDown);
@@ -186,6 +375,8 @@ function resetState() {
   STATE.pollutantChance = CONFIG.POLLUTANT_CHANCE;
   STATE.running         = false;
   STATE.keysHeld        = { left: false, right: false };
+  STATE.milestonesShown = [];
+  STATE.activeMilestones = buildMilestones(CONFIG.WIN_DROPS_TARGET);
 
   // Reset player position
   STATE.playerX = (CONFIG.BOARD_WIDTH / 2) - (CONFIG.PLAYER_WIDTH / 2);
@@ -219,6 +410,7 @@ function endGame(isWin) {
   STATE.drops.forEach(d => { if (d.el && d.el.parentNode) d.el.parentNode.removeChild(d.el); });
   STATE.drops = [];
 
+  playSound(isWin ? 'win' : 'lose');
   showModal(isWin);
 }
 
@@ -464,6 +656,8 @@ function onCleanDropCaught(drop) {
   triggerScreenFlash('blue');
   triggerPlayerFlash('positive');
   flashScoreColor('green');
+  playSound('clean');
+  checkMilestones();
 
   // Increase difficulty slightly
   STATE.dropSpeed = Math.min(
@@ -502,6 +696,7 @@ function onPollutantCaught(drop) {
   triggerScreenFlash('red');
   triggerPlayerFlash('negative');
   flashScoreColor('red');
+  playSound('pollutant');
 
   // Check lose condition
   if (STATE.lives <= 0) {
@@ -621,7 +816,7 @@ function showModal(isWin) {
   if (isWin) {
     DOM.modalTitle.textContent = 'Impact Made! 🎉';
     DOM.modalBody.textContent  =
-      'You collected 50 clean drops — helping fund a campus water project! ' +
+      'You collected ' + CONFIG.WIN_DROPS_TARGET + ' clean drops — helping fund a campus water project! ' +
       'Here is your exclusive Campus Cafeteria discount:';
     DOM.modalReward.style.display = 'flex';
   } else {

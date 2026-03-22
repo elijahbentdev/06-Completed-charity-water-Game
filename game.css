@@ -1091,3 +1091,132 @@ button {
     opacity: 0.5;
   }
 }
+/* ===================================================
+   PHASE 2 ADDITIONS — Week 2 Upgrades
+   All new rules appended below existing styles.
+=================================================== */
+
+/* ───────────────────────────────────────────
+   DIFFICULTY SELECTOR (Welcome Screen)
+─────────────────────────────────────────── */
+#difficulty-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.difficulty-label {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--cw-text-muted);
+  text-transform: uppercase;
+}
+
+.difficulty-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.difficulty-btn {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 8px 16px;
+  border-radius: 99px;
+  border: 2px solid var(--cw-charcoal-alt);
+  background: transparent;
+  color: #C0C0C0;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s, transform 0.15s;
+  text-transform: uppercase;
+}
+
+.difficulty-btn:hover {
+  border-color: var(--cw-yellow);
+  color: var(--cw-yellow);
+  transform: translateY(-1px);
+}
+
+/* Normal (default) active state — yellow */
+.difficulty-btn.active {
+  background: var(--cw-yellow);
+  border-color: var(--cw-yellow);
+  color: var(--cw-charcoal);
+}
+
+/* Easy active state — green */
+.difficulty-btn[data-difficulty="easy"].active {
+  background: #43A047;
+  border-color: #43A047;
+  color: #FFFFFF;
+}
+
+/* Hard active state — red */
+.difficulty-btn[data-difficulty="hard"].active {
+  background: var(--cw-red);
+  border-color: var(--cw-red);
+  color: #FFFFFF;
+}
+
+.difficulty-desc {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--cw-text-muted);
+  text-align: center;
+  min-height: 1.2em;
+  transition: color 0.2s;
+}
+
+/* ───────────────────────────────────────────
+   MILESTONE TOAST NOTIFICATION
+─────────────────────────────────────────── */
+#milestone-toast {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: rgba(20, 20, 20, 0.94);
+  border: 1px solid var(--cw-yellow);
+  border-radius: 99px;
+  padding: 8px 22px;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--cw-white);
+  white-space: nowrap;
+  z-index: 12;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 8px rgba(255,201,7,0.2);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast-hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-12px);
+}
+
+.toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ───────────────────────────────────────────
+   FOOTER DONATE LINK
+─────────────────────────────────────────── */
+.footer-donate {
+  color: var(--cw-yellow);
+  font-weight: 700;
+}
+
+.footer-donate:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
