@@ -248,6 +248,8 @@ function applyDifficulty(mode) {
   // Update the /N target number in the progress count
   var targetEl = document.getElementById('drops-target');
   if (targetEl) targetEl.textContent = d.WIN_DROPS_TARGET;
+  var sidebarTarget = document.getElementById('sidebar-drops-target');
+  if (sidebarTarget) sidebarTarget.textContent = d.WIN_DROPS_TARGET;
 
   // Update difficulty description text
   var descDescs = {
@@ -746,6 +748,8 @@ function updateRewardCircle(caught) {
 
   const countEl = document.getElementById('reward-drops-count');
   if (countEl) countEl.textContent = caught;
+  const targetEl2 = document.getElementById('reward-drops-target');
+  if (targetEl2) targetEl2.textContent = CONFIG.WIN_DROPS_TARGET;
 
   // Reveal code when won
   if (caught >= CONFIG.WIN_DROPS_TARGET) {
