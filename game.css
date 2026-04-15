@@ -17,7 +17,7 @@
   --cw-red:           #E53935;
   --cw-gray-light:    #E0E0E0;
   --cw-text-primary:  #1A1A1A;
-  --cw-text-muted:    #757575;
+  --cw-text-muted:    #A0A0A0;
 
   --font-display: 'Montserrat', sans-serif;
   --font-body:    'Open Sans', sans-serif;
@@ -67,6 +67,11 @@ button {
   border: none;
   outline: none;
   transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s;
+}
+
+:focus-visible {
+  outline: 3px solid var(--cw-yellow);
+  outline-offset: 2px;
 }
 
 /* ===================================================
